@@ -5,10 +5,16 @@ import fetch from 'node-fetch'; // 최신 node-fetch 방식
 const app = express();
 
 // ✅ 여기에 본인의 Gemini API 키를 정확히 입력하세요!
-const API_KEY = 'AIzaSyCwhypGNz8ExfrzrpJbcjsZiG_ZORTCAQ4';
+const API_KEY = process.env.GEMINI_API_KEY;
 
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.static('public'));
+
+
+app.get('/healthz', (req, res) => {
+  res.status(200).send('OK');
+});
+
 
 app.post('/analyze', async (req, res) => {
   try {
