@@ -1,14 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <title>AI 식물 닥터</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 식물 건강 분석기 | 식물 닥터</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f6f9f8;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      color: #333;
+    }
+    header {
+      background-color: #1b5e20;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .section-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .card {
+      flex: 1 1 300px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      border-top: 5px solid #66bb6a;
+    }
+    .card h3 {
+      margin-top: 0;
+      color: #2e7d32;
+    }
+    .card p, .card ul {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .highlight {
+      background: #e8f5e9;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .upload-box {
+      border: 2px dashed #a5d6a7;
+      background: #f1f8f4;
+      text-align: center;
+      padding: 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 20px 0;
+    }
+    textarea, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #43a047;
+      color: white;
+      border: none;
+    }
+    button:hover {
+      background-color: #388e3c;
+    }
+    #loading {
+      text-align: center;
+      font-style: italic;
+      color: #888;
+    }
+    #resultBox {
+      background: #ffffff;
+      border: 2px solid #c8e6c9;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    @media (max-width: 768px) {
+      .section-grid {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h2>식물 사진을 올리고 문제를 분석해보세요!</h2>
-  <input type="file" id="imageInput"><br><br>
-  <textarea id="plantInfo" placeholder="식물 이름이나 상태를 적어주세요" rows="4" cols="50"></textarea><br><br>
-  <button onclick="analyze()">분석하기</button>
-  <pre id="result"></pre>
+  <header>
+    <h1>🌿 AI 식물 건강 분석기</h1>
+    <p>사진을 올리고 문제를 입력하면 AI가 해결책을 제시해드려요!</p>
+  </header>
+
+  <section class="section-grid">
+    <div class="card">
+      <h3>📷 사진 업로드</h3>
+      <label for="imageInput" class="upload-box" style="font-size: 1.1rem; padding: 50px; max-width: 400px; margin: 0 auto; display: block;">
+        <span style="display: block; font-weight: bold; color: #2e7d32;">여기를 클릭하거나 사진을 드래그하세요</span>
+        <span style="font-size: 0.9rem; color: #555; display: block; margin-top: 10px;">식물 사진을 업로드 해주세요</span>
+        <input type="file" id="imageInput" accept="image/*" hidden>
+      </label>
+      <img 
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Tomato_leaf_spots.JPG/640px-Tomato_leaf_spots.JPG" 
+        alt="식물 질병 예시 이미지" 
+        style="width: 100%; max-width: 400px; border-radius: 8px; margin: 20px auto 0; display: block;">
+      <p style="font-size: 0.85rem; color: #555; margin-top: 10px; text-align: center;">
+        예시: 방울토마토 잎에 생긴 갈색 반점 (잎곰팡이병)
+      </p>
+    </div>
+  </section>
+
+    <div class="card">
+      <h3>📝 문제 설명</h3>
+      <textarea id="plantInfo" placeholder="예: 잎이 갈색으로 변하며 가장자리가 말라갑니다."></textarea>
+      <div class="highlight" style="margin-top: 10px; text-align: left;">
+        <strong>AI 정확도 높이기 팁:</strong>
+        <ul>
+          <li>✔️ 구체적으로: "잎이 갈색으로 변했어요"</li>
+          <li>✔️ 조건 추가: "물은 일주일에 한 번 줘요"</li>
+          <li>✔️ 시기 명시: "3일 전부터 시들기 시작했어요"</li>
+        </ul>
+      </div>
+      <button onclick="analyze()">🔍 분석하기</button>
+      <div id="loading" style="display: none;">AI가 분석 중입니다... ⌛</div>
+    </div>
+
+    <div class="card" id="resultBox" style="display: none;">
+      <h3>📊 분석 결과</h3>
+      <div id="result"></div>
+    </div>
+  </section>
 
   <script>
     async function analyze() {
@@ -19,20 +146,31 @@
       reader.onload = async function () {
         const base64Image = reader.result;
 
-        const response = await fetch('/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageBase64: base64Image,
-            plantInfo: plantInfo
-          })
-        });
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('resultBox').style.display = 'none';
 
-        const data = await response.json();
-        document.getElementById('result').textContent = data.reply;
+        try {
+          const response = await fetch('/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: base64Image,
+              plantInfo: plantInfo
+            })
+          });
+
+          const data = await response.json();
+
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('resultBox').style.display = 'block';
+          const result = data.reply.split('\n').map(line => `<li>${line}</li>`).join('');
+          document.getElementById('result').innerHTML = `<ul style="text-align: left; padding-left: 20px;">${result}</ul>`;
+
+        } catch (error) {
+          document.getElementById('loading').textContent = '분석 중 오류가 발생했습니다. 다시 시도해 주세요.';
+        }
       };
-
-      reader.readAsDataURL(file);
+      if (file) reader.readAsDataURL(file);
     }
   </script>
 </body>
