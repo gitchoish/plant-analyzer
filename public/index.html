@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI 식물 건강 분석기 | 식물 닥터</title>
   <style>
     body {
@@ -85,6 +85,12 @@
       margin-top: 20px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
+    #fileNameDisplay {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #444;
+      margin-top: 8px;
+    }
     @media (max-width: 768px) {
       .section-grid {
         flex-direction: column;
@@ -104,8 +110,9 @@
       <label for="imageInput" class="upload-box" style="font-size: 1.1rem; padding: 50px; max-width: 400px; margin: 0 auto; display: block;">
         <span style="display: block; font-weight: bold; color: #2e7d32;">여기를 클릭하거나 사진을 드래그하세요</span>
         <span style="font-size: 0.9rem; color: #555; display: block; margin-top: 10px;">식물 사진을 업로드 해주세요</span>
-        <input type="file" id="imageInput" accept="image/*" hidden>
+        <input type="file" id="imageInput" accept="image/*" hidden onchange="displayFileName(event)">
       </label>
+      <div id="fileNameDisplay"></div>
       <img 
         src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Tomato_leaf_spots.JPG/640px-Tomato_leaf_spots.JPG" 
         alt="식물 질병 예시 이미지" 
@@ -114,7 +121,6 @@
         예시: 방울토마토 잎에 생긴 갈색 반점 (잎곰팡이병)
       </p>
     </div>
-  </section>
 
     <div class="card">
       <h3>📝 문제 설명</h3>
@@ -138,6 +144,16 @@
   </section>
 
   <script>
+    function displayFileName(event) {
+      const fileInput = event.target;
+      const fileNameDisplay = document.getElementById('fileNameDisplay');
+      if (fileInput.files.length > 0) {
+        fileNameDisplay.textContent = `업로드된 파일: ${fileInput.files[0].name}`;
+      } else {
+        fileNameDisplay.textContent = '';
+      }
+    }
+
     async function analyze() {
       const file = document.getElementById('imageInput').files[0];
       const plantInfo = document.getElementById('plantInfo').value;
@@ -163,6 +179,7 @@
 
           document.getElementById('loading').style.display = 'none';
           document.getElementById('resultBox').style.display = 'block';
+
           const result = data.reply.split('\n').map(line => `<li>${line}</li>`).join('');
           document.getElementById('result').innerHTML = `<ul style="text-align: left; padding-left: 20px;">${result}</ul>`;
 
@@ -170,6 +187,7 @@
           document.getElementById('loading').textContent = '분석 중 오류가 발생했습니다. 다시 시도해 주세요.';
         }
       };
+
       if (file) reader.readAsDataURL(file);
     }
   </script>
