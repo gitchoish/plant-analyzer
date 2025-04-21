@@ -91,6 +91,21 @@
       color: #444;
       margin-top: 8px;
     }
+    .image-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 400px;
+    }
+    .bounding-box {
+      position: absolute;
+      border: 2px solid red;
+      background: rgba(255, 0, 0, 0.2);
+      color: red;
+      font-size: 0.75rem;
+      padding: 2px 4px;
+      pointer-events: none;
+    }
     @media (max-width: 768px) {
       .section-grid {
         flex-direction: column;
@@ -110,13 +125,15 @@
       <label for="imageInput" class="upload-box" style="font-size: 1.1rem; padding: 50px; max-width: 400px; margin: 0 auto; display: block;">
         <span style="display: block; font-weight: bold; color: #2e7d32;">여기를 클릭하거나 사진을 드래그하세요</span>
         <span style="font-size: 0.9rem; color: #555; display: block; margin-top: 10px;">식물 사진을 업로드 해주세요</span>
-        <input type="file" id="imageInput" accept="image/*" hidden onchange="displayFileName(event)">
+        <input type="file" id="imageInput" accept="image/*" hidden onchange="handleFileChange(event)">
       </label>
       <div id="fileNameDisplay"></div>
-      <img 
-        src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Tomato_leaf_spots.JPG/640px-Tomato_leaf_spots.JPG" 
-        alt="식물 질병 예시 이미지" 
-        style="width: 100%; max-width: 400px; border-radius: 8px; margin: 20px auto 0; display: block;">
+      <div class="image-wrapper">
+        <img id="uploadedImage" 
+             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Tomato_leaf_spots.JPG/640px-Tomato_leaf_spots.JPG" 
+             alt="식물 질병 예시 이미지" 
+             style="width: 100%; border-radius: 8px;">
+      </div>
       <p style="font-size: 0.85rem; color: #555; margin-top: 10px; text-align: center;">
         예시: 방울토마토 잎에 생긴 갈색 반점 (잎곰팡이병)
       </p>
@@ -144,13 +161,21 @@
   </section>
 
   <script>
-    function displayFileName(event) {
-      const fileInput = event.target;
+    function handleFileChange(event) {
+      const file = event.target.files[0];
       const fileNameDisplay = document.getElementById('fileNameDisplay');
-      if (fileInput.files.length > 0) {
-        fileNameDisplay.textContent = `업로드된 파일: ${fileInput.files[0].name}`;
+      const previewImage = document.getElementById('uploadedImage');
+
+      if (file) {
+        fileNameDisplay.textContent = `업로드된 파일: ${file.name}`;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
       } else {
         fileNameDisplay.textContent = '';
+        previewImage.src = '';
       }
     }
 
@@ -183,12 +208,43 @@
           const result = data.reply.split('\n').map(line => `<li>${line}</li>`).join('');
           document.getElementById('result').innerHTML = `<ul style="text-align: left; padding-left: 20px;">${result}</ul>`;
 
+          // 박스 시각화
+          if (data.boxes) addBoxFromData(data);
+
         } catch (error) {
           document.getElementById('loading').textContent = '분석 중 오류가 발생했습니다. 다시 시도해 주세요.';
         }
       };
 
       if (file) reader.readAsDataURL(file);
+    }
+
+    function addBoxFromData(data) {
+      const wrapper = document.querySelector('.image-wrapper');
+      document.querySelectorAll('.bounding-box').forEach(el => el.remove());
+
+      data.boxes.forEach(boxInfo => {
+        const box = document.createElement('div');
+        box.className = 'bounding-box';
+        box.style.top = boxInfo.y + 'px';
+        box.style.left = boxInfo.x + 'px';
+        box.style.width = boxInfo.width + 'px';
+        box.style.height = boxInfo.height + 'px';
+        box.textContent = boxInfo.label;
+
+        const label = boxInfo.label.toLowerCase();
+        if (label.includes('건강')) {
+          box.style.borderColor = 'green';
+          box.style.backgroundColor = 'rgba(0, 200, 0, 0.2)';
+          box.style.color = 'green';
+        } else {
+          box.style.borderColor = 'red';
+          box.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+          box.style.color = 'red';
+        }
+
+        wrapper.appendChild(box);
+      });
     }
   </script>
 </body>
