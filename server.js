@@ -3,7 +3,12 @@ import bodyParser from 'body-parser';
 import fetch from 'node-fetch';
 
 const app = express();
-const API_KEY = '여기에_실제_Gemini_API_KEY를_입력하세요'; // 또는 환경변수 사용
+
+// 환경변수에서 API 키 불러오기
+const API_KEY = process.env.GEMINI_API_KEY;
+
+// API 키 존재 여부 로깅
+console.log('🔑 API Key 설정 상태:', API_KEY ? '✅ 있음' : '❌ 없음');
 
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.static('public'));
@@ -14,17 +19,23 @@ app.get('/healthz', (req, res) => {
 
 app.post('/analyze', async (req, res) => {
   try {
+    // API 키 존재 확인
+    if (!API_KEY) {
+      console.error('❌ 환경변수 GEMINI_API_KEY가 설정되지 않았습니다.');
+      return res.status(500).send({ error: 'API 키 누락', detail: '서버에 API 키가 설정되지 않았습니다.' });
+    }
+
     const { imageBase64, plantInfo } = req.body;
 
+    // 요청 유효성 검사
     if (!imageBase64 || !plantInfo) {
       return res.status(400).send({ error: '이미지 또는 설명이 누락되었습니다.' });
     }
 
     console.log('✅ 분석 요청 도착');
-    console.log('사용자 설명:', plantInfo);
-    console.log('이미지 길이:', imageBase64.length);
+    console.log('📝 설명:', plantInfo);
+    console.log('📷 이미지 길이:', imageBase64.length);
 
-    // 프롬프트 구성 (분석 내용 + JSON 좌표 반환 요청 포함)
     const prompt = `
 다음 식물 사진과 설명을 기반으로 두 가지 정보를 JSON 형식으로 반환해 주세요:
 
@@ -64,6 +75,8 @@ ${plantInfo}
       ]
     };
 
+    console.log('🚀 Gemini API 호출 시작');
+
     const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,26 +84,32 @@ ${plantInfo}
     });
 
     const result = await response.json();
+    console.log('📥 Gemini 응답 원문:', JSON.stringify(result, null, 2));
 
-    if (!result?.candidates?.[0]?.content?.parts?.[0]?.text) {
+    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
       return res.status(500).send({ error: 'AI 응답 없음', detail: result });
     }
 
-    const rawText = result.candidates[0].content.parts[0].text;
-    console.log('🧠 AI 응답 텍스트:\n', rawText);
+    console.log('🧠 AI 응답 텍스트:', text.slice(0, 300), '...');
 
-    // boxes와 reply를 분리 파싱
-    const boxMatch = rawText.match(/"boxes"\s*:\s*(\[[\s\S]*?\])/);
+    // boxes 추출
+    const boxMatch = text.match(/"boxes"\s*:\s*(\[[\s\S]*?\])/);
     let boxes = [];
     if (boxMatch) {
       try {
         boxes = JSON.parse(boxMatch[1]);
+        console.log('✅ 박스 추출 성공:', boxes);
       } catch (e) {
-        console.error('❌ boxes 파싱 오류:', e.message);
+        console.error('❌ boxes JSON 파싱 실패:', e.message);
       }
+    } else {
+      console.warn('⚠️ 응답 내 boxes 항목 없음');
     }
 
-    const replySection = rawText.replace(/"boxes"\s*:\s*\[[\s\S]*?\]/, '').trim();
+    // reply 본문 추출
+    const replySection = text.replace(/"boxes"\s*:\s*\[[\s\S]*?\]/, '').trim();
 
     res.send({
       reply: replySection,
@@ -98,7 +117,7 @@ ${plantInfo}
     });
 
   } catch (error) {
-    console.error('❌ Gemini API 호출 중 예외 발생:', error);
+    console.error('❌ 서버 예외 발생:', error);
     res.status(500).send({ error: '서버 내부 오류 발생', detail: error.message });
   }
 });
