@@ -16,7 +16,7 @@
     header {
       background-color: #1b5e20;
       color: white;
-      padding: 1rem;
+      padding: 1.5rem;
       text-align: center;
     }
     .section-grid {
@@ -27,7 +27,7 @@
       padding: 2rem 1rem;
     }
     .card {
-      flex: 1 1 300px;
+      flex: 1 1 320px;
       background: white;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
@@ -37,10 +37,7 @@
     .card h3 {
       margin-top: 0;
       color: #2e7d32;
-    }
-    .card p, .card ul {
-      font-size: 0.95rem;
-      line-height: 1.5;
+      text-align: center;
     }
     .highlight {
       background: #e8f5e9;
@@ -51,10 +48,23 @@
       border: 2px dashed #a5d6a7;
       background: #f1f8f4;
       text-align: center;
-      padding: 30px;
+      padding: 24px;
       border-radius: 10px;
       cursor: pointer;
-      margin: 20px 0;
+      margin: 20px auto;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+      word-break: keep-all;
+    }
+    .upload-box span {
+      display: block;
+      margin: 6px 0;
+      font-size: 0.95rem;
+      line-height: 1.4;
     }
     textarea, button {
       width: 100%;
@@ -93,9 +103,15 @@
     }
     .image-wrapper {
       position: relative;
-      display: inline-block;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .image-wrapper img {
       width: 100%;
       max-width: 400px;
+      border-radius: 8px;
     }
     .bounding-box {
       position: absolute;
@@ -122,17 +138,14 @@
   <section class="section-grid">
     <div class="card">
       <h3>📷 사진 업로드</h3>
-      <label for="imageInput" class="upload-box" style="font-size: 1.1rem; padding: 50px; max-width: 400px; margin: 0 auto; display: block;">
-        <span style="display: block; font-weight: bold; color: #2e7d32;">여기를 클릭하거나 사진을 드래그하세요</span>
-        <span style="font-size: 0.9rem; color: #555; display: block; margin-top: 10px;">식물 사진을 업로드 해주세요</span>
+      <label for="imageInput" class="upload-box">
+        <span><strong>📸 클릭하거나 사진을 드래그하세요</strong></span>
+        <span>식물 사진을 업로드 해주세요</span>
         <input type="file" id="imageInput" accept="image/*" hidden onchange="handleFileChange(event)">
       </label>
       <div id="fileNameDisplay"></div>
       <div class="image-wrapper">
-        <img id="uploadedImage" 
-             src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Tomato_leaf_spots.JPG/640px-Tomato_leaf_spots.JPG" 
-             alt="식물 질병 예시 이미지" 
-             style="width: 100%; border-radius: 8px;">
+        <img id="uploadedImage" src="images/examples.png" alt="식물 질병 예시 이미지">
       </div>
       <p style="font-size: 0.85rem; color: #555; margin-top: 10px; text-align: center;">
         예시: 방울토마토 잎에 생긴 갈색 반점 (잎곰팡이병)
@@ -142,7 +155,7 @@
     <div class="card">
       <h3>📝 문제 설명</h3>
       <textarea id="plantInfo" placeholder="예: 잎이 갈색으로 변하며 가장자리가 말라갑니다."></textarea>
-      <div class="highlight" style="margin-top: 10px; text-align: left;">
+      <div class="highlight" style="margin-top: 10px;">
         <strong>AI 정확도 높이기 팁:</strong>
         <ul>
           <li>✔️ 구체적으로: "잎이 갈색으로 변했어요"</li>
@@ -208,9 +221,7 @@
           const result = data.reply.split('\n').map(line => `<li>${line}</li>`).join('');
           document.getElementById('result').innerHTML = `<ul style="text-align: left; padding-left: 20px;">${result}</ul>`;
 
-          // 박스 시각화
           if (data.boxes) addBoxFromData(data);
-
         } catch (error) {
           document.getElementById('loading').textContent = '분석 중 오류가 발생했습니다. 다시 시도해 주세요.';
         }
