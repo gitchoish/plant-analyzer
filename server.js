@@ -3,23 +3,22 @@ import bodyParser from 'body-parser';
 import fetch from 'node-fetch';
 
 const app = express();
-
-// 환경변수에서 API 키 불러오기
 const API_KEY = process.env.GEMINI_API_KEY;
 
-// API 키 존재 여부 로깅
+// API 키 존재 여부 출력
 console.log('🔑 API Key 설정 상태:', API_KEY ? '✅ 있음' : '❌ 없음');
 
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
+// 헬스체크용 엔드포인트
 app.get('/healthz', (req, res) => {
   res.status(200).send('OK');
 });
 
+// 분석 요청 처리
 app.post('/analyze', async (req, res) => {
   try {
-    // API 키 존재 확인
     if (!API_KEY) {
       console.error('❌ 환경변수 GEMINI_API_KEY가 설정되지 않았습니다.');
       return res.status(500).send({ error: 'API 키 누락', detail: '서버에 API 키가 설정되지 않았습니다.' });
@@ -27,7 +26,6 @@ app.post('/analyze', async (req, res) => {
 
     const { imageBase64, plantInfo } = req.body;
 
-    // 요청 유효성 검사
     if (!imageBase64 || !plantInfo) {
       return res.status(400).send({ error: '이미지 또는 설명이 누락되었습니다.' });
     }
@@ -36,6 +34,7 @@ app.post('/analyze', async (req, res) => {
     console.log('📝 설명:', plantInfo);
     console.log('📷 이미지 길이:', imageBase64.length);
 
+    // 프롬프트 구성
     const prompt = `
 다음 식물 사진과 설명을 기반으로 두 가지 정보를 JSON 형식으로 반환해 주세요:
 
@@ -122,6 +121,7 @@ ${plantInfo}
   }
 });
 
+// 서버 실행
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ 서버 실행 중: http://localhost:${PORT}`);

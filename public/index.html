@@ -13,12 +13,14 @@
       line-height: 1.6;
       color: #333;
     }
+
     header {
       background-color: #1b5e20;
       color: white;
-      padding: 1.5rem;
+      padding: 1rem;
       text-align: center;
     }
+
     .section-grid {
       display: flex;
       flex-wrap: wrap;
@@ -26,46 +28,43 @@
       justify-content: center;
       padding: 2rem 1rem;
     }
+
     .card {
-      flex: 1 1 320px;
+      flex: 1 1 300px;
       background: white;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
       padding: 20px;
       border-top: 5px solid #66bb6a;
     }
+
     .card h3 {
       margin-top: 0;
       color: #2e7d32;
       text-align: center;
     }
+
+    .upload-box {
+      border: 2px dashed #a5d6a7;
+      background: #f1f8f4;
+      text-align: center;
+      padding: 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 20px auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      max-width: 400px;
+    }
+
     .highlight {
       background: #e8f5e9;
       padding: 10px;
       border-radius: 8px;
     }
-    .upload-box {
-      border: 2px dashed #a5d6a7;
-      background: #f1f8f4;
-      text-align: center;
-      padding: 24px;
-      border-radius: 10px;
-      cursor: pointer;
-      margin: 20px auto;
-      max-width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 120px;
-      word-break: keep-all;
-    }
-    .upload-box span {
-      display: block;
-      margin: 6px 0;
-      font-size: 0.95rem;
-      line-height: 1.4;
-    }
+
     textarea, button {
       width: 100%;
       margin-top: 10px;
@@ -74,45 +73,43 @@
       border-radius: 8px;
       border: 1px solid #ccc;
     }
+
     button {
       background-color: #43a047;
       color: white;
       border: none;
     }
+
     button:hover {
       background-color: #388e3c;
     }
+
     #loading {
       text-align: center;
       font-style: italic;
       color: #888;
     }
-    #resultBox {
-      background: #ffffff;
-      border: 2px solid #c8e6c9;
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
+
     #fileNameDisplay {
       text-align: center;
       font-size: 0.9rem;
       color: #444;
       margin-top: 8px;
     }
+
     .image-wrapper {
       position: relative;
-      display: flex;
-      justify-content: center;
-      width: 100%;
-      margin-top: 10px;
-    }
-    .image-wrapper img {
       width: 100%;
       max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .image-wrapper img {
+      width: 100%;
+      display: block;
       border-radius: 8px;
     }
+
     .bounding-box {
       position: absolute;
       border: 2px solid red;
@@ -122,6 +119,16 @@
       padding: 2px 4px;
       pointer-events: none;
     }
+
+    #resultBox {
+      background: #ffffff;
+      border: 2px solid #c8e6c9;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
     @media (max-width: 768px) {
       .section-grid {
         flex-direction: column;
@@ -139,14 +146,19 @@
     <div class="card">
       <h3>📷 사진 업로드</h3>
       <label for="imageInput" class="upload-box">
-        <span><strong>📸 클릭하거나 사진을 드래그하세요</strong></span>
-        <span>식물 사진을 업로드 해주세요</span>
+        <span><strong>여기를 클릭하거나 사진을 드래그하세요</strong></span>
+        <span style="margin-top: 8px; color: #555;">식물 사진을 업로드 해주세요</span>
         <input type="file" id="imageInput" accept="image/*" hidden onchange="handleFileChange(event)">
       </label>
+
       <div id="fileNameDisplay"></div>
+
       <div class="image-wrapper">
-        <img id="uploadedImage" src="images/examples.png" alt="식물 질병 예시 이미지">
+        <img id="uploadedImage"
+             src="images/examples.png"
+             alt="식물 질병 예시 이미지">
       </div>
+
       <p style="font-size: 0.85rem; color: #555; margin-top: 10px; text-align: center;">
         예시: 방울토마토 잎에 생긴 갈색 반점 (잎곰팡이병)
       </p>
@@ -214,7 +226,6 @@
           });
 
           const data = await response.json();
-
           document.getElementById('loading').style.display = 'none';
           document.getElementById('resultBox').style.display = 'block';
 
@@ -222,6 +233,7 @@
           document.getElementById('result').innerHTML = `<ul style="text-align: left; padding-left: 20px;">${result}</ul>`;
 
           if (data.boxes) addBoxFromData(data);
+
         } catch (error) {
           document.getElementById('loading').textContent = '분석 중 오류가 발생했습니다. 다시 시도해 주세요.';
         }
@@ -232,15 +244,19 @@
 
     function addBoxFromData(data) {
       const wrapper = document.querySelector('.image-wrapper');
+      const img = document.getElementById('uploadedImage');
+      const xRatio = img.clientWidth / img.naturalWidth;
+      const yRatio = img.clientHeight / img.naturalHeight;
+
       document.querySelectorAll('.bounding-box').forEach(el => el.remove());
 
       data.boxes.forEach(boxInfo => {
         const box = document.createElement('div');
         box.className = 'bounding-box';
-        box.style.top = boxInfo.y + 'px';
-        box.style.left = boxInfo.x + 'px';
-        box.style.width = boxInfo.width + 'px';
-        box.style.height = boxInfo.height + 'px';
+        box.style.left = (boxInfo.x * xRatio) + 'px';
+        box.style.top = (boxInfo.y * yRatio) + 'px';
+        box.style.width = (boxInfo.width * xRatio) + 'px';
+        box.style.height = (boxInfo.height * yRatio) + 'px';
         box.textContent = boxInfo.label;
 
         const label = boxInfo.label.toLowerCase();
